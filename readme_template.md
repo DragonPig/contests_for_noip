@@ -29,3 +29,4 @@
 - [ ] [Little Wish~ lyrical step~](http://acm.hdu.edu.cn/showproblem.php?pid=4735)
 #### 启发式合并(每个点最多被合并logn次) （F题）
 - [ ] [Boring Counting](http://acm.hdu.edu.cn/showproblem.php?pid=4358)
+
