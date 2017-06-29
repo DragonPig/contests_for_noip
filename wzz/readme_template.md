@@ -6,11 +6,7 @@
 
   \# |  A  |  B  |  C  |  D  |  E  |  F  |  G  
 ---|---|---|---|---|---|---|---
-|contest0|YES|  YES     | YES | Waiting | Waiting | X|X
-| contest1 | YES   |   YES   | YES|YES|Accepted|YES|Accepted
-
-
-
+|contest13|YES|  YES     | YES | YES |Accepted |Acceepted|Waiting
 ## 赛后好题推荐
 > * 作比赛的时候碰到了新的知识，假如增加专题，优先做下方的题目再去刷专题
 
