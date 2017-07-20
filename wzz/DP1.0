@@ -1,0 +1,571 @@
+DP1.0的力度适中，适合DP初学者学习DP的简要思想。
+
+A - 268D WAR BARS 
+
+
+一道很受启迪的题目，大意是给你4根棒子和一个高度H，一个人的可上升高h，问你在每个高度处放一根木棒，最后人能到达顶端的方案数是多少？
+
+H<=1000,h<=30.
+
+第一眼想到一个h^4*n的算法，不幸会TLE，dp[i][j][k][l][m]表示放到第i根，放的棒子距这根新放的棒子的距离。大于k当k+1计算这个就是裸的转移。
+
+但注意到每次转移后，我们能确定上次转移的棒子一定距该棒为1，且四个棒等价，所以直接用一个bool记录上一次放的那一维是否可达，手动将距离减个一压空间。最后判边界，有一维可达即可达。
+
+//这种多个相同元的Dp，可以利用当前维用0/1表示省掉一维，细节还是要考虑清楚！！！ 
+```
+#pragma  GCC optimize(3)
+using namespace std;
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<cstring>
+#include<cmath>
+#define N 2001
+#define ll long long
+#define sy system("pause")
+ll dp[1011][31][31][31][2];ll n;ll h;
+ll const mod=1e9+9;
+ll val;
+void inc(ll &hh)
+{
+    hh=(hh+val)%mod;
+}
+ll res;
+int main()
+{
+    cin>>n>>h;res=0;
+    dp[0][0][0][0][1]=1;
+    for(int i=1;i<=n;i++)
+    {
+        for(int j=0;j<=h;j++)
+        {
+            for(int k=0;k<=h;k++)
+            {
+                for(int l=0;l<=h;l++)
+                {
+                    for(int opt=0;opt<=1;opt++)
+                    {
+                        if((val=dp[i-1][j][k][l][opt]))
+                        {
+                            inc(dp[i][j<h?j+1:h][k<h?k+1:h][l<h?l+1:h][opt]);
+                            inc(dp[i][opt?1:h][k<h?k+1:h][l<h?l+1:h][j<h?1:0]);
+                            inc(dp[i][opt?1:h][j<h?j+1:h][l<h?l+1:h][k<h?1:0]);
+                            inc(dp[i][opt?1:h][j<h?j+1:h][k<h?k+1:h][l<h?1:0]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for(int i=0;i<=h;i++)
+    {
+        for(int j=0;j<=h;j++)
+        {
+            for(int k=0;k<=h;k++)
+            for(int opt=0;opt<=1;opt++)
+            {
+                if((val=dp[n][i][j][k][opt])&&(j<h||k<h||i<h||opt))inc(res);
+            }
+        }
+    }
+    cout<<res<<endl;
+}
+``` 
+
+总结:对象轮换对称，前一位状态选择直接可知元素信息的DP题，可以用一个bool数组来优化掉一维DP。
+
+ 
+
+B - 285EPositions in Permutations 
+
+ 
+
+题意：求n个全排列中abs(a[i]-i)=1的个数恰好为k的个数。
+
+ 
+
+容斥DP的妙题，当我们要求一个数列恰好满足k个满足要求的元时，考虑容斥，满足k个，剩下的乱排，得到至少k个，容斥出解。
+
+这题求至少k个的DP利用了这前一个后一个对应的性质，一维记录自己选了吗，另一位纪录下一位是否用了，这样DP一边下来的结果乘上一个(n-k)!即是所求，容斥出解。
+
+总结：遇到恰好可想容斥。DP关系相互对应的DP一般可类似降维。（这里i,i+1互相放位都有1的贡献）
+
+ 
+```
+//以后碰到这类与前后位有关的问题，可以一位位Dp+全排列，这样可以减少插头维数，降为两维
+//先计算至少有几个的再加容斥是基本的解题方略 
+using namespace std;
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#define ll long long
+#define N 2001
+#define mod 1000000007
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+ll C[N][N];
+ll dp[N][N][2][2];
+int n,m;
+ll ans[N];
+void add(ll &x,ll y)
+{
+    x=(x+y)%mod;
+}
+int main()
+{
+    cin>>n>>m;
+    for(int i=0;i<=2000;i++) C[i][0]=1;
+    for(int i=1;i<=2000;i++)
+    {
+        for(int j=1;j<=i;j++)
+        {
+            C[i][j]=(C[i-1][j]+C[i-1][j-1])%mod;
+        }
+    }
+    dp[0][0][1][0]=1;
+    for(int i=0;i<=n-1;i++)
+    {
+        for(int j=0;j<=n;j++)
+        {
+            for(int now=0;now<=1;now++)
+            {
+                for(int nxt=0;nxt<=1;nxt++)
+                {
+                    if(!now)add(dp[i+1][j+1][nxt][0],dp[i][j][now][nxt]);
+                    //第i+1位放在第i位 
+                    if(i<n-1) 
+                    add(dp[i+1][j+1][nxt][1],dp[i][j][now][nxt]);
+                    //第i+1位放在第i+2位 
+                    add(dp[i+1][j][nxt][0],dp[i][j][now][nxt]);
+                    //该数字随便放跑全排列
+                    //秒的一点是就是我们无需考虑该数字会不会放在原位影响结果，因为最后这些位置默认放了，不能再放 
+                }
+            }
+        }
+    }
+    for(int i=0;i<=n;i++)
+    {
+        for(int j=0;j<=1;j++)
+        {
+            for(int l=0;l<=1;l++)
+            {
+                ans[i]=(ans[i]+dp[n][i][j][l])%mod;
+            }
+        }
+        for(int k=2;k<=n-i;k++) {ans[i]=ans[i]*k;ans[i]%=mod;}
+    }
+    int flag = -1;
+    //容斥原理的基本式子，直接利用 
+    rep(i,m+1,n) {
+        ans[m] = (ans[m] + flag * C[i][m] * ans[i]) % mod;
+        if (ans[m] < 0) ans[m] += mod;
+        flag *= -1;
+    }
+
+    cout<<ans[m]<<endl;
+}
+ 
+```
+C-802J Send the Fool Further!
+
+ 
+
+一道典型的树形DP，题目比较简单，直接大力分套一发，替换性问题可以用排序优化。
+
+ 
+```
+//替换性问题典型的优化方法：排序之后扫一遍 
+using namespace std;
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#include<cmath>
+#include<vector>
+#define N 200001
+#define forw(i,x) for(int i=fir[x];i;i=ne[i])
+struct NODE{
+    int v0,no;
+    int v1;
+}ind;
+bool cmp(NODE x,NODE y)
+{
+    return x.v1>y.v1;
+}
+vector<NODE>son[N];
+int n,k;
+int fir[N],ne[N*2],C[N*2],to[N*2],cnt;
+void add(int x,int y,int z)
+{
+    ne[++cnt]=fir[x];fir[x]=cnt;C[cnt]=z;to[cnt]=y;
+}
+int x,y,z;
+int dp[N][2];
+void dfs(int x,int f)
+{
+    int tot=0;
+    forw(i,x)
+    {
+        int V=to[i];
+        if(V==f) continue;
+        dfs(V,x);
+        ind.no=V;
+        ind.v1=dp[V][1]+C[i];
+        ind.v0=dp[V][0]+C[i];
+        tot++;
+        son[x].push_back(ind);
+    }
+    dp[x][1]=0;
+    sort(son[x].begin(),son[x].end(),cmp);
+    for(int i=0;i<min(tot,k-1);i++)
+    {
+        dp[x][1]+=son[x][i].v1;
+    }
+    if((k)>tot)
+    {
+        dp[x][0]=dp[x][1];
+        for(int i=0;i<tot;i++)
+        {
+            int eps=son[x][i].v0-son[x][i].v1;
+            dp[x][0]=max(dp[x][0],dp[x][1]+eps);
+        }
+    }
+    else
+    {
+        dp[x][0]=dp[x][1];
+        int it=son[x][k-1].v1;
+        for(int i=0;i<tot;i++)
+        {
+            int eps=son[x][i].v0-son[x][i].v1;
+            if(i<k)
+            {
+                dp[x][0]=max(dp[x][0],dp[x][1]+eps+it);
+            }
+            else
+            {
+                dp[x][0]=max(dp[x][0],dp[x][1]+son[x][i].v0);
+            }
+        }
+    }
+}
+int main()
+{
+    scanf("%d%d",&n,&k);
+    for(int i=1;i<=n-1;i++)
+    {
+        scanf("%d%d%d",&x,&y,&z);
+        add(x+1,y+1,z);
+        add(y+1,x+1,z);
+    }
+    dfs(1,0);
+    int res=max(dp[1][1],dp[1][0]);
+    printf("%d\n",res);
+}
+```
+
+ 
+
+D - 86C-Genetic engineering
+
+ 
+
+题意：给你k个模式串，每个串长度<=10,每个串若有前后缀相同可拼接，求拼出n长度的串的方案数。
+
+AC自动机DP，可以给AC自动机加上一个endpos记录在这里结束的串的最长长度，每次转移如果走到了一个能够消掉后缀的点直接置0即可。fail的时候直接把每个儿子接上即可。这样就巧妙处理了任意重叠的状况。以后碰上这种题直接上这种DP。
+```
+using namespace std;
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#include<queue>
+#include<vector>
+#define N 100001
+#define ll long long
+#define int ll
+const ll mod=1000000009;
+int n,m;
+struct AC_machine {
+    int sz,root,son[101][5],fail[101];
+    char s[11];
+    int a[11];
+    int en[101],maxx[101];
+    int chg(char xx) {
+        if(xx=='A') return 1;
+        if(xx=='T') return 2;
+        if(xx=='C') return 3;
+        return 4;
+    }
+    int dp[1001][101][11];
+    void init() {
+        memset(son,0,sizeof(son));
+        memset(dp,0,sizeof(dp));
+        memset(en,0,sizeof(en));
+        root=sz=1;
+    }
+    void add() {
+        scanf("%s",s);
+        int l=strlen(s);
+        int p=root;
+        for(int i=0;i<l;i++) {
+            a[i]=chg(s[i]);
+            if(!son[p][a[i]]) son[p][a[i]]=++sz;
+            p=son[p][a[i]];
+        }
+        en[p]=l;
+    }
+    void build() {
+        queue<int>q;
+        while(!q.empty()) q.pop();
+        q.push(root);fail[root]=0;
+        while(!q.empty()) {
+            int ind=q.front();q.pop();
+            for(int i=1;i<=4;i++) {
+                if(son[ind][i]) {
+                    int p=fail[ind];
+                    while(!son[p][i]&&p)p=fail[p];
+                    if(!p)p=1;else p=son[p][i];
+                    fail[son[ind][i]]=p;
+                    q.push(son[ind][i]);
+                    maxx[son[ind][i]]=max(en[son[ind][i]],maxx[fail[son[ind][i]]]);
+                }
+            }
+        }
+        for(int i=1;i<=sz;i++) {
+            for(int j=1;j<=4;j++) {
+                if(!son[i][j]) {
+                    int p=fail[i];
+                    while(p&&!son[p][j]) p=fail[p];
+                    if(!p)p=0;else p=son[p][j];
+                    son[i][j]=p;
+                }
+            }
+        }
+    }
+    int val;
+    void calc(int &x) {
+        x+=val;x=x%mod;
+    }
+    void doit() {
+        dp[0][1][0]=1;
+        for(int i=0;i<n;i++) {
+            for(int j=1;j<=sz;j++) {
+                for(int k=0;k<10;k++) if(val=dp[i][j][k]){
+                    for(int l=1;l<=4;l++) if(son[j][l]) {
+                        if(k+1<=maxx[son[j][l]]) calc(dp[i+1][son[j][l]][0]);
+                        else
+                        calc(dp[i+1][son[j][l]][k+1]);
+                    }
+                }
+            }
+        }
+        int res=0;
+        for(int i=1;i<=sz;i++) res+=dp[n][i][0]%mod,res%=mod;
+        cout<<res<<endl;
+    }
+}zsy;
+main() {
+    cin>>n>>m;
+    zsy.init();
+    for(int i=1;i<=m;i++) zsy.add();
+    zsy.build();
+    zsy.doit();
+}
+ 
+```
+总结：这类子串问题就是这样的套路。
+
+ 
+
+E-powerful-array
+
+莫队题，呵呵。
+
+ 
+
+F-Maxim and Increasing Subsequence
+
+ 
+
+题意：一个串重复t次求最长上升子序列。
+
+ 
+
+最naive的算法：t>=maxb||t>=n时时直接输出重复元素个数。
+
+否则强行树状数组维护最长上升子序列（卡卡常或者离散化都能过）。
+
+但正解是一种权衡思想，意在维护<=这个权值的最优值，（其实就是暴力前缀，这样外层循环O(1),里层循环最大更新答案不超过外层循环)这样就削掉了了一个log
+
+ 
+```
+//权衡之道，就是把几个放一起的时候，没必要大复杂度叠一起，可以两维都中等复杂度权衡来降复杂度
+using namespace std;
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#include<cmath>
+#define N 100001
+int dp[N],n,m,t,k,mb;
+int ans,a[N];
+void r(int &x)
+{
+    char g=getchar();
+    while(g>'9'||g<'0') g=getchar();
+    x=0;
+    while(g>='0'&&g<='9') {
+        x=x*10+g-'0';g=getchar();
+    }
+}
+void solve()
+{
+    memset(dp,0,sizeof(dp));
+    ans=0;
+    for(int i=1;i<=n;i++) r(a[i]);
+    if(t>=mb||t>=n){
+        for(int i=1;i<=n;i++){
+            if(!dp[a[i]]){
+                dp[a[i]]=1;ans++;
+            }
+        }
+        printf("%d\n",ans);
+        return;
+    }
+    int i,j,k;
+    dp[mb]=2e9;
+    for(i=1;i<=t;i++){
+        for(j=1;j<=n;j++) {
+            dp[a[j]]=dp[a[j]-1]+1;
+            for(k=a[j]+1;dp[k]<dp[k-1];dp[k]=dp[k-1],k++);
+        }
+    }
+    printf("%d\n",dp[mb-1]);
+}
+int main()
+{
+    r(k);r(n);r(mb);r(t);mb++;
+    for(int i=1;i<=k;i++)solve();
+}
+```
+总结：以后可以权衡之道来讲复杂度。
+
+ 
+
+G-215 E Periodical Numbers
+
+ 
+
+求l-r区间内二进制表示存在循环节的数的个数。
+
+ 
+
+f[i]表示i位1开头的不存在循环节的数的个数。
+
+ 
+
+dp[i]表示i位数的答案。
+
+ 
+
+转前缀和求答案。
+
+数位DP暴力部分，只要求要求的那个数的二进制表示位数时的答案。这时枚举循环节，利用判断最高这几位是否可行的方法找到无论是否有循环节的答案然后容斥一发即可，数位DP的基本思路就是预处理阶段答案+容斥+转前缀和相减。
+```
+using namespace std;
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+#include<cstring>
+#define ll long long
+#define N 1001
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+#define int ll
+ll dp[1001],pow[1001],f[1001];
+ll l,r,res;
+ll it[N];
+ll hh[N];
+ll doit(ll x)
+{
+    ll ans=0,cnt=0;
+    ll k=x;
+    memset(hh,0,sizeof(hh));
+    while(k>0)
+    {
+        it[++cnt]=k%2;
+        k/=2;
+    }
+    for(int i=cnt-1;i>=1;i--) ans+=dp[i];
+    for(int i=1;i<cnt;i++)
+    {
+        if(cnt%i==0)
+        {
+            ll mm=x%pow[i];
+            ll k=x;
+            ll ii=0;
+            while(k)
+            {
+                ii++;
+                if((k>>i)==0)
+                {    
+                    mm=k;
+                    break;
+                }
+                k>>=i;
+            }
+            ll atp=k;
+            for(int j=1;j<=ii-1;j++)
+            {
+                atp<<=i;atp+=k;
+            }
+//            cout<<atp<<endl;
+            if(atp>x) k--;
+            mm=k;
+            hh[i]=mm-pow[i-1]+1;
+            for(int j=1;j<i;j++)
+            {
+                if(i%j==0) hh[i]-=hh[j];
+            }
+            ans+=hh[i];
+//            cout<<i<<" "<<hh[i]<<endl;
+        }
+    }
+    return ans;
+}
+main()
+{
+    cin>>l>>r;
+    pow[0]=1;
+    for(int i=1;i<=62;i++) pow[i]=pow[i-1]*2;
+    for(int i=1;i<=62;i++)
+    {
+        f[i]=pow[i-1];//保证首位为1即可
+        for(int j=1;j<i;j++)
+        {
+            if(i%j==0)
+            {
+                f[i]-=f[j];
+            }
+        }
+    }
+    for(int i=1;i<=62;i++)
+    {
+        for(int j=1;j<i;j++)
+        {
+            if(i%j==0)
+            {
+                dp[i]+=f[j];
+            }
+        }
+    }
+    res=doit(r);
+    res-=doit(l-1);
+    cout<<res<<endl;
+}
+``` 
+
+总结：数位DP基本方略就这样:容斥+一位位枚举。
+
+
+
+ 
